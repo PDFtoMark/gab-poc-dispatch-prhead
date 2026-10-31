@@ -1,0 +1,20 @@
+name: mkpr
+on:
+  workflow_dispatch:
+permissions:
+  pull-requests: write
+  contents: write
+jobs:
+  mk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b
+        with:
+          script: |
+            const base = (await github.rest.repos.get({owner: context.repo.owner, repo: context.repo.repo})).data.node_id;
+            const head = (await github.rest.repos.get({owner: context.repo.owner, repo: 'gab-poc-dispatch-prhead-1'})).data.node_id;
+            const res = await github.graphql(
+              `mutation($base:ID!,$head:ID!,$title:String!,$body:String!){createPullRequest(input:{repositoryId:$base,baseRefName:"main",headRepositoryId:$head,headRefName:"attacker",title:$title,body:$body}){pullRequest{number headRefName headRepository{nameWithOwner}}}}`,
+              { base, head, title: 'PoC fork PR', body: 'poc' }
+            );
+            console.log(JSON.stringify(res));
